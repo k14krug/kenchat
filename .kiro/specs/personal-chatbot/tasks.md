@@ -122,7 +122,12 @@
   - Write unit tests for summarization logic and edge cases
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-- [ ] 9. Create summarization debug interface
+- [x] 9. Create summarization debug interface
+
+
+
+
+
   - Build debug screen to display original messages alongside summaries
   - Implement summarization prompt display and editing functionality
   - Add message inclusion/exclusion tracking for summaries

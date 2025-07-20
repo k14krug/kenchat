@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summarization Debug Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #34495e;
+            color: white;
+            padding: 12px 16px;
+            font-weight: bold;
+        }
+        .section-content {
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .message.user {
+            background: #e8f4fd;
+            border-left-color: #3498db;
+        }
+        .message.assistant {
+            background: #f0f8f0;
+            border-left-color: #27ae60;
+        }
+        .message.summarized {
+            opacity: 0.6;
+            background: #f8f8f8;
+            border-left-color: #95a5a6;
+        }
+        .message.included {
+            border-left-color: #e74c3c;
+            border-left-width: 6px;
+        }
+        .summary {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .summary.active {
+            border-color: #f39c12;
+            background: #fef9e7;
+        }
+        .controls {
+            grid-column: 1 / -1;
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.secondary {
+            background: #95a5a6;
+        }
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fdf2f2;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #27ae60;
+            background: #f0f8f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        .prompt-editor {
+            grid-column: 1 / -1;
+        }
+        .prompt-editor textarea {
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Summarization Debug Interface</h1>
+            <p>Debug and test conversation summarization</p>
+        </div>
+
+        <div class="controls">
+            <div class="form-group">
+                <label for="conversationId">Conversation ID:</label>
+                <input type="text" id="conversationId" placeholder="Enter conversation UUID">
+            </div>
+            <div class="form-group">
+                <label for="authToken">Auth Token:</label>
+                <input type="password" id="authToken" placeholder="Enter your JWT token">
+            </div>
+            <button onclick="loadDebugData()">Load Debug Data</button>
+            <button onclick="testSummarization()" class="secondary">Test Summarization</button>
+        </div>
+
+        <div id="stats" class="stats" style="display: none;"></div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header">Original Messages</div>
+                <div class="section-content" id="messages">
+                    <div class="loading">Load a conversation to see messages</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">Generated Summaries</div>
+                <div class="section-content" id="summaries">
+                    <div class="loading">Load a conversation to see summaries</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="prompt-editor section">
+            <div class="section-header">Prompt Editor</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="promptType">Prompt Type:</label>
+                    <select id="promptType">
+                        <option value="initial">Initial Summary Prompt</option>
+                        <option value="rolling">Rolling Summary Prompt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="promptContent">Prompt Content:</label>
+                    <textarea id="promptContent" placeholder="Prompt will be loaded here..."></textarea>
+                </div>
+                <button onclick="updatePrompt()">Update Prompt</button>
+                <button onclick="loadPrompts()" class="secondary">Reload Prompts</button>
+                <button onclick="testWithCustomPrompt()" class="secondary">Test Custom Prompt</button>
+            </div>
+        </div>
+
+        <div id="testResults" class="section" style="display: none;">
+            <div class="section-header">Test Results</div>
+            <div class="section-content" id="testContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        const API_BASE = '/api';
+
+        function getAuthHeaders() {
+            const token = document.getElementById('authToken').value;
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.body.insertBefore(errorDiv, document.body.firstChild);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            document.body.insertBefore(successDiv, document.body.firstChild);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        async function loadDebugData() {
+            const conversationId = document.getElementById('conversationId').value;
+            if (!conversationId) {
+                showError('Please enter a conversation ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/debug/conversations/${conversationId}/summarization`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to load debug data');
+                }
+
+                const data = await response.json();
+                currentData = data.data;
+                renderDebugData();
+                loadPrompts();
+                showSuccess('Debug data loaded successfully');
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function renderDebugData() {
+            if (!currentData) return;
+
+            // Render stats
+            const statsHtml = `
+                <div class="stat">
+                    <div class="stat-value">${currentData.originalMessages.length}</div>
+                    <div class="stat-label">Total Messages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${currentData.originalMessages.filter(m => m.isSummarized).length}</div>
+                    <div class="stat-label">Summarized</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${currentData.summaries.length}</div>
+                    <div class="stat-label">Summaries</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${currentData.summaries.filter(s => s.isActive).length}</div>
+                    <div class="stat-label">Active Summaries</div>
+                </div>
+            `;
+            document.getElementById('stats').innerHTML = statsHtml;
+            document.getElementById('stats').style.display = 'grid';
+
+            // Render messages
+            const messagesHtml = currentData.originalMessages.map(message => {
+                const classes = ['message', message.role];
+                if (message.isSummarized) classes.push('summarized');
+                if (message.isIncludedInSummary) classes.push('included');
+
+                return `
+                    <div class="${classes.join(' ')}" data-message-id="${message.id}">
+                        <div style="font-weight: bold; margin-bottom: 5px;">
+                            ${message.role.toUpperCase()} 
+                            ${message.isSummarized ? '(Summarized)' : ''}
+                            ${message.isIncludedInSummary ? '(In Summary)' : ''}
+                        </div>
+                        <div>${message.content}</div>
+                        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
+                            ${new Date(message.createdAt).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('messages').innerHTML = messagesHtml;
+
+            // Render summaries
+            const summariesHtml = currentData.summaries.map(summary => `
+                <div class="summary ${summary.isActive ? 'active' : ''}">
+                    <div style="font-weight: bold; margin-bottom: 10px;">
+                        Summary ${summary.isActive ? '(Active)' : '(Inactive)'}
+                        ${summary.tokenCount ? `- ${summary.tokenCount} tokens` : ''}
+                    </div>
+                    <div style="margin-bottom: 10px;">${summary.content}</div>
+                    <div style="font-size: 12px; color: #7f8c8d;">
+                        Created: ${new Date(summary.createdAt).toLocaleString()}
+                        ${summary.messageRangeStart ? `<br>Range: ${summary.messageRangeStart} to ${summary.messageRangeEnd}` : ''}
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('summaries').innerHTML = summariesHtml || '<div class="loading">No summaries found</div>';
+        }
+
+        async function loadPrompts() {
+            try {
+                const response = await fetch(`${API_BASE}/debug/summarization/prompts`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load prompts');
+                }
+
+                const data = await response.json();
+                const promptType = document.getElementById('promptType').value;
+                const promptContent = promptType === 'initial' ? data.data.prompts.initial : data.data.prompts.rolling;
+                document.getElementById('promptContent').value = promptContent;
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function updatePrompt() {
+            const promptType = document.getElementById('promptType').value;
+            const promptContent = document.getElementById('promptContent').value;
+
+            if (!promptContent.trim()) {
+                showError('Prompt content cannot be empty');
+                return;
+            }
+
+            try {
+                const body = {};
+                body[promptType === 'initial' ? 'initialPrompt' : 'rollingPrompt'] = promptContent;
+
+                const response = await fetch(`${API_BASE}/debug/summarization/prompts`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to update prompt');
+                }
+
+                showSuccess('Prompt updated successfully');
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testSummarization() {
+            const conversationId = document.getElementById('conversationId').value;
+            if (!conversationId) {
+                showError('Please enter a conversation ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/debug/conversations/${conversationId}/test-summary`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to test summarization');
+                }
+
+                const data = await response.json();
+                displayTestResults(data.data);
+                showSuccess('Test summarization completed');
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function testWithCustomPrompt() {
+            const conversationId = document.getElementById('conversationId').value;
+            const promptContent = document.getElementById('promptContent').value;
+            const promptType = document.getElementById('promptType').value;
+
+            if (!conversationId) {
+                showError('Please enter a conversation ID');
+                return;
+            }
+
+            if (!promptContent.trim()) {
+                showError('Please enter a custom prompt');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/debug/conversations/${conversationId}/test-summary`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        customPrompt: promptContent,
+                        useRollingPrompt: promptType === 'rolling'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to test custom prompt');
+                }
+
+                const data = await response.json();
+                displayTestResults(data.data);
+                showSuccess('Custom prompt test completed');
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function displayTestResults(testData) {
+            const resultsHtml = `
+                <div class="summary">
+                    <div style="font-weight: bold; margin-bottom: 10px;">Test Summary Result</div>
+                    <div style="margin-bottom: 15px;">${testData.testSummary.content}</div>
+                    <div style="font-size: 12px; color: #7f8c8d;">
+                        Messages: ${testData.testSummary.messageCount} | 
+                        Rolling: ${testData.testSummary.isRollingPrompt ? 'Yes' : 'No'}
+                        ${testData.testSummary.existingSummary ? ' | Has existing summary' : ''}
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <strong>Original Messages Used:</strong>
+                    ${testData.originalMessages.map(msg => `
+                        <div class="message ${msg.role}" style="margin-top: 10px;">
+                            <div style="font-weight: bold;">${msg.role.toUpperCase()}</div>
+                            <div>${msg.content}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            document.getElementById('testContent').innerHTML = resultsHtml;
+            document.getElementById('testResults').style.display = 'block';
+        }
+
+        // Event listeners
+        document.getElementById('promptType').addEventListener('change', loadPrompts);
+
+        // Load prompts on page load if we have auth
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('debugToken');
+            if (token) {
+                document.getElementById('authToken').value = token;
+            }
+        });
+
+        // Save token to localStorage
+        document.getElementById('authToken').addEventListener('change', (e) => {
+            localStorage.setItem('debugToken', e.target.value);
+        });
+    </script>
+</body>
+</html>

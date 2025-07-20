@@ -1,4 +1,4 @@
-import winston from 'winston';
+import * as winston from 'winston';
 import { environment } from './environment';
 
 // Create logs directory if it doesn't exist

@@ -331,6 +331,32 @@ export class SummarizationService {
     logger.info('Summarization configuration updated', updates);
   }
 
+  /**
+   * Generate test summary for debug purposes
+   */
+  async generateTestSummary(
+    context: SummarizationContext,
+    isRolling: boolean = false
+  ): Promise<string> {
+    try {
+      const prompt = this.buildSummaryPrompt(context, isRolling);
+
+      const response = await this.openAIService.generateResponse(
+        [{ role: 'user', content: prompt }],
+        this.config.summaryModel,
+        {
+          maxTokens: this.config.maxSummaryTokens,
+          temperature: 0.3,
+        }
+      );
+
+      return response.content;
+    } catch (error) {
+      logger.error('Error generating test summary:', error);
+      throw new AIServiceError('Failed to generate test summary');
+    }
+  }
+
   // Private helper methods
 
   private selectMessagesForSummarization(

@@ -6,6 +6,13 @@ export { MessageRepository } from './MessageRepository';
 export { PersonaRepository } from './PersonaRepository';
 export { SummaryRepository } from './SummaryRepository';
 
+// Import for use in factory
+import { UserRepository } from './UserRepository';
+import { ConversationRepository } from './ConversationRepository';
+import { MessageRepository } from './MessageRepository';
+import { PersonaRepository } from './PersonaRepository';
+import { SummaryRepository } from './SummaryRepository';
+
 // Repository factory for dependency injection
 export class RepositoryFactory {
   private static userRepository: UserRepository;

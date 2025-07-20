@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import * as mysql from 'mysql2/promise';
 import { environment } from './environment';
 
 export interface DatabaseConfig {

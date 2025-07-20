@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import Joi from 'joi';
+import * as Joi from 'joi';
 
 // Load environment variables from .env file
 config();

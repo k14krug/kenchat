@@ -9,6 +9,7 @@ import aiRoutes from './routes/ai';
 import personaRoutes from './routes/personas';
 import conversationRoutes from './routes/conversations';
 import summarizationRoutes from './routes/summarization';
+import debugRoutes from './routes/debug';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 class App {
@@ -34,6 +35,9 @@ class App {
     // Body parsing middleware
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
+
+    // Serve static files
+    this.app.use('/static', express.static('src/public'));
 
     // HTTP request logging
     this.app.use(morgan('combined', {
@@ -77,6 +81,9 @@ class App {
 
     // Summarization routes
     this.app.use('/api', summarizationRoutes);
+
+    // Debug routes (developer/admin only)
+    this.app.use('/api/debug', debugRoutes);
 
     // 404 handler for undefined routes
     this.app.use(notFoundHandler);
