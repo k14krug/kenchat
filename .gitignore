@@ -64,6 +64,11 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
+#virtual environment files
+.venv/  
+venv/
+.venv/
+
 # Logs
 logs/
 *.log
