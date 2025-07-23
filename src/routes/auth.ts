@@ -2,6 +2,12 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { authMiddleware } from '../middleware/auth';
 import { environment } from '../config/environment';
+import { 
+  validateUserRegistration, 
+  validateUserLogin, 
+  handleValidationErrors,
+  sanitizeInput 
+} from '../middleware/requestValidation';
 
 const router = Router();
 const authController = new AuthController();
@@ -17,14 +23,26 @@ const authRateLimit = authMiddleware.rateLimit(
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/register', authRateLimit, authController.register);
+router.post('/register', 
+  authRateLimit, 
+  sanitizeInput,
+  validateUserRegistration, 
+  handleValidationErrors, 
+  authController.register
+);
 
 /**
  * @route   POST /api/auth/login
  * @desc    Login user
  * @access  Public
  */
-router.post('/login', authRateLimit, authController.login);
+router.post('/login', 
+  authRateLimit, 
+  sanitizeInput,
+  validateUserLogin, 
+  handleValidationErrors, 
+  authController.login
+);
 
 /**
  * @route   POST /api/auth/refresh

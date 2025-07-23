@@ -1,19 +1,31 @@
 import { Router } from 'express';
 import { AIController } from '../controllers/AIController';
 import { authMiddleware } from '../middleware/auth';
+import { 
+  validateAIGeneration,
+  validateCostCalculation,
+  validateUUID,
+  handleValidationErrors,
+  sanitizeInput
+} from '../middleware/requestValidation';
 
 const router = Router();
 const aiController = new AIController();
 
 // Apply authentication middleware to all AI routes
 router.use(authMiddleware.authenticate);
+router.use(sanitizeInput);
 
 /**
  * @route   POST /api/ai/generate
  * @desc    Generate AI response
  * @access  Private
  */
-router.post('/generate', aiController.generateResponse);
+router.post('/generate', 
+  validateAIGeneration, 
+  handleValidationErrors, 
+  aiController.generateResponse
+);
 
 /**
  * @route   GET /api/ai/models
@@ -27,14 +39,22 @@ router.get('/models', aiController.getModels);
  * @desc    Get specific model information
  * @access  Private
  */
-router.get('/models/:modelId', aiController.getModelInfo);
+router.get('/models/:modelId', 
+  validateUUID('modelId'), 
+  handleValidationErrors, 
+  aiController.getModelInfo
+);
 
 /**
  * @route   POST /api/ai/cost
  * @desc    Calculate cost for token usage
  * @access  Private
  */
-router.post('/cost', aiController.calculateCost);
+router.post('/cost', 
+  validateCostCalculation, 
+  handleValidationErrors, 
+  aiController.calculateCost
+);
 
 /**
  * @route   GET /api/ai/test

@@ -6,11 +6,14 @@ import { environment } from './config/environment';
 import { logger } from './config/logger';
 import authRoutes from './routes/auth';
 import aiRoutes from './routes/ai';
+import chatRoutes from './routes/chatRoutes';
 import personaRoutes from './routes/personas';
 import conversationRoutes from './routes/conversations';
 import summarizationRoutes from './routes/summarization';
 import debugRoutes from './routes/debug';
+import costTrackingRoutes from './routes/cost-tracking';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { addApiDocumentation, getApiDocumentation } from './middleware/apiDocumentation';
 
 class App {
   public app: Application;
@@ -35,6 +38,9 @@ class App {
     // Body parsing middleware
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
+
+    // API documentation headers
+    this.app.use(addApiDocumentation);
 
     // Serve static files
     this.app.use('/static', express.static('src/public'));
@@ -64,14 +70,21 @@ class App {
       res.status(200).json({
         message: 'KenChat API is running',
         version: '1.0.0',
+        documentation: `${req.protocol}://${req.get('host')}/api/docs`,
       });
     });
+
+    // API documentation endpoint
+    this.app.get('/api/docs', getApiDocumentation);
 
     // Authentication routes
     this.app.use('/api/auth', authRoutes);
 
     // AI routes
     this.app.use('/api/ai', aiRoutes);
+
+    // Chat routes (enhanced AI generation with context)
+    this.app.use('/api/chat', chatRoutes);
 
     // Persona routes
     this.app.use('/api/personas', personaRoutes);
@@ -81,6 +94,9 @@ class App {
 
     // Summarization routes
     this.app.use('/api', summarizationRoutes);
+
+    // Cost tracking routes
+    this.app.use('/api/cost-tracking', costTrackingRoutes);
 
     // Debug routes (developer/admin only)
     this.app.use('/api/debug', debugRoutes);

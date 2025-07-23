@@ -18,18 +18,21 @@ import {
   AIQuotaExceededError,
   AINetworkError,
 } from '../utils/errors';
+import { CostTrackingService } from './CostTrackingService';
 
 export class OpenAIService {
   private readonly client: OpenAI;
   private readonly defaultModel: string = 'gpt-4o-mini';
   private readonly maxRetries: number = 3;
   private readonly baseDelay: number = 1000; // 1 second
+  private readonly costTrackingService: CostTrackingService;
 
   constructor() {
     this.client = new OpenAI({
       apiKey: environment.openai.apiKey,
       organization: environment.openai.organization,
     });
+    this.costTrackingService = new CostTrackingService();
   }
 
   /**
@@ -102,6 +105,42 @@ export class OpenAIService {
     } catch (error) {
       logger.error('Failed to generate AI response:', error);
       throw this.handleOpenAIError(error);
+    }
+  }
+
+  /**
+   * Generate AI response with cost tracking
+   */
+  async generateResponseWithTracking(
+    messages: ChatMessage[],
+    userId: string,
+    conversationId?: number,
+    model: string = this.defaultModel,
+    options: AIOptions = {}
+  ): Promise<AIResponse> {
+    try {
+      // Check cost limits before making the request
+      const costLimitStatus = await this.costTrackingService.checkCostLimits(userId);
+      
+      if (!costLimitStatus.isWithinLimit) {
+        throw new AIQuotaExceededError('User has exceeded cost limits');
+      }
+
+      // Generate the response
+      const aiResponse = await this.generateResponse(messages, model, options);
+
+      // Log the usage
+      await this.costTrackingService.logAIUsage(
+        userId,
+        conversationId,
+        aiResponse,
+        'message_received'
+      );
+
+      return aiResponse;
+    } catch (error) {
+      logger.error('Failed to generate AI response with tracking:', error);
+      throw error;
     }
   }
 

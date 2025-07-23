@@ -304,3 +304,33 @@ export const expectValidPagination = (pagination: any): void => {
   expect(typeof pagination.page).toBe('number');
   expect(typeof pagination.total).toBe('number');
 };
+
+export const cleanupTestUser = async (userId: string): Promise<void> => {
+  // Clean up test data for a specific user
+  await db.execute('DELETE FROM summaries WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id = ?)', [userId]);
+  await db.execute('DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id = ?)', [userId]);
+  await db.execute('DELETE FROM conversations WHERE user_id = ?', [userId]);
+  await db.execute('DELETE FROM personas WHERE user_id = ?', [userId]);
+  await db.execute('DELETE FROM usage_logs WHERE user_id = ?', [userId]);
+  await db.execute('DELETE FROM users WHERE id = ?', [userId]);
+};
+
+// Export as testHelpers object for easier importing
+export const testHelpers = {
+  createMockUser,
+  createMockUserResponse,
+  createMockCreateUserRequest,
+  hashPassword,
+  createTestUser,
+  createTestConversation,
+  createTestMessages,
+  getAuthToken,
+  getUserByUsername,
+  cleanupTestData,
+  cleanupTestUser,
+  generateTestId,
+  createHighTokenConversation,
+  createMixedRoleConversation,
+  expectValidSummary,
+  expectValidPagination,
+};

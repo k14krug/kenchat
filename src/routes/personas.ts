@@ -1,26 +1,43 @@
 import { Router } from 'express';
 import { PersonaController } from '../controllers/PersonaController';
 import { authMiddleware } from '../middleware/auth';
+import { 
+  validatePersonaCreation,
+  validatePersonaUpdate,
+  validateUUID,
+  validatePaginationQuery,
+  handleValidationErrors,
+  sanitizeInput
+} from '../middleware/requestValidation';
 
 const router = Router();
 const personaController = new PersonaController();
 
 // Apply authentication middleware to all persona routes
 router.use(authMiddleware.authenticate);
+router.use(sanitizeInput);
 
 /**
  * @route   POST /api/personas
  * @desc    Create a new persona
  * @access  Private
  */
-router.post('/', personaController.createPersona);
+router.post('/', 
+  validatePersonaCreation, 
+  handleValidationErrors, 
+  personaController.createPersona
+);
 
 /**
  * @route   GET /api/personas
  * @desc    Get all personas for the authenticated user
  * @access  Private
  */
-router.get('/', personaController.getUserPersonas);
+router.get('/', 
+  validatePaginationQuery, 
+  handleValidationErrors, 
+  personaController.getUserPersonas
+);
 
 /**
  * @route   GET /api/personas/summaries
@@ -62,21 +79,34 @@ router.post('/validate-prompt', personaController.validateSystemPrompt);
  * @desc    Get persona by ID
  * @access  Private
  */
-router.get('/:personaId', personaController.getPersonaById);
+router.get('/:personaId', 
+  validateUUID('personaId'), 
+  handleValidationErrors, 
+  personaController.getPersonaById
+);
 
 /**
  * @route   PUT /api/personas/:personaId
  * @desc    Update persona
  * @access  Private
  */
-router.put('/:personaId', personaController.updatePersona);
+router.put('/:personaId', 
+  validateUUID('personaId'), 
+  validatePersonaUpdate, 
+  handleValidationErrors, 
+  personaController.updatePersona
+);
 
 /**
  * @route   DELETE /api/personas/:personaId
  * @desc    Delete persona
  * @access  Private
  */
-router.delete('/:personaId', personaController.deletePersona);
+router.delete('/:personaId', 
+  validateUUID('personaId'), 
+  handleValidationErrors, 
+  personaController.deletePersona
+);
 
 /**
  * @route   POST /api/personas/:personaId/set-default

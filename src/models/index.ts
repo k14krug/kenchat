@@ -5,6 +5,7 @@ export * from './Message';
 export * from './Persona';
 export * from './Summary';
 export * from './AI';
+export * from './UsageLog';
 
 // Common types used across models
 export interface PaginationOptions {

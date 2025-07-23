@@ -38,6 +38,14 @@ const envSchema = Joi.object({
 
   // CORS configuration
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+
+  // Cost tracking configuration
+  COST_TRACKING_ENABLED: Joi.boolean().default(true),
+  COST_TRACKING_DAILY_LIMIT: Joi.number().optional(),
+  COST_TRACKING_WEEKLY_LIMIT: Joi.number().optional(),
+  COST_TRACKING_MONTHLY_LIMIT: Joi.number().optional(),
+  COST_TRACKING_WARNING_THRESHOLD: Joi.number().min(0).max(100).default(80),
+  COST_TRACKING_ALERT_WEBHOOK_URL: Joi.string().uri().optional(),
 }).unknown();
 
 // Validate environment variables
@@ -80,6 +88,14 @@ export interface EnvironmentConfig {
   cors: {
     origin: string;
   };
+  costTracking: {
+    enabled: boolean;
+    dailyLimit?: number;
+    weeklyLimit?: number;
+    monthlyLimit?: number;
+    warningThreshold: number;
+    alertWebhookUrl?: string;
+  };
 }
 
 export const environment: EnvironmentConfig = {
@@ -114,5 +130,13 @@ export const environment: EnvironmentConfig = {
   },
   cors: {
     origin: envVars.CORS_ORIGIN,
+  },
+  costTracking: {
+    enabled: envVars.COST_TRACKING_ENABLED,
+    dailyLimit: envVars.COST_TRACKING_DAILY_LIMIT,
+    weeklyLimit: envVars.COST_TRACKING_WEEKLY_LIMIT,
+    monthlyLimit: envVars.COST_TRACKING_MONTHLY_LIMIT,
+    warningThreshold: envVars.COST_TRACKING_WARNING_THRESHOLD,
+    alertWebhookUrl: envVars.COST_TRACKING_ALERT_WEBHOOK_URL,
   },
 };
